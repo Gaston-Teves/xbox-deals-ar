@@ -10,6 +10,7 @@ export const ALFAJOR_ALERT_TYPE = "alfajor-digest";
 const DEFAULT_ALFAJOR_PRICE_ARS = 1800;
 const DEFAULT_MAX_DEALS = 10;
 const DEFAULT_REPEAT_DAYS = 7;
+const DISCORD_CONTENT_LIMIT = 1900;
 
 const franchiseBoosts: Array<{ pattern: RegExp; boost: number; reason: string }> = [
   { pattern: /\b(age of empires|aoe)\b/i, boost: 80, reason: "franquicia historica" },
@@ -117,15 +118,20 @@ export async function sendAlfajorDigestToDiscord(
   } = {},
 ): Promise<AlfajorDigestResult> {
   const digest = await buildAlfajorDigest(deals, options);
-  const content = buildAlfajorDiscordMessage(digest);
-  const response = await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content }),
-  });
+  const messages = buildAlfajorDiscordMessages(digest);
 
-  if (!response.ok) {
-    throw new Error(`Discord respondio ${response.status}: ${response.statusText}`);
+  for (const content of messages) {
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Discord respondio ${response.status}: ${response.statusText}`,
+      );
+    }
   }
 
   await persistAlertEvents(
@@ -168,7 +174,7 @@ export function getAlfajorMaxDeals(): number {
   const parsed = Number(process.env.ALFAJOR_DIGEST_MAX_DEALS);
 
   return Number.isFinite(parsed)
-    ? Math.min(Math.max(Math.floor(parsed), 1), 20)
+    ? Math.min(Math.max(Math.floor(parsed), 1), 50)
     : DEFAULT_MAX_DEALS;
 }
 
@@ -305,18 +311,18 @@ function normalizeDigestTitle(value: string): string {
     .trim();
 }
 
-function buildAlfajorDiscordMessage(digest: AlfajorDigestResult): string {
+function buildAlfajorDiscordMessages(digest: AlfajorDigestResult): string[] {
   if (digest.selected.length === 0) {
-    return [
+    return [[
       "Mas barato que un alfajor",
       "",
       `No encontre juegos de PC relevantes por debajo de ${formatArs(
         digest.threshold,
       )} en esta corrida.`,
-    ].join("\n");
+    ].join("\n")];
   }
 
-  const lines = [
+  const intro = [
     "Mas barato que un alfajor",
     "",
     `Juegos de PC en Xbox/Microsoft Store Argentina por menos de ${formatArs(
@@ -324,25 +330,43 @@ function buildAlfajorDiscordMessage(digest: AlfajorDigestResult): string {
     )}. No todos son ofertas: algunos simplemente estan muy baratos.`,
     "",
   ];
+  const messages: string[] = [];
+  let currentLines = [...intro];
 
   digest.selected.forEach(({ deal, reasons }, index) => {
     const steamPrice = deal.externalPrices?.[0];
-
-    lines.push(`${index + 1}. ${deal.title}`);
-    lines.push(`   Xbox: ${formatArs(deal.currentPrice)}`);
-    lines.push(
+    const itemLines = [
+      `${index + 1}. ${deal.title}`,
+      `   Xbox: ${formatArs(deal.currentPrice)}`,
       `   Steam: ${
         steamPrice
           ? `${formatMoney(steamPrice.currentPrice, steamPrice.currency)}`
           : "sin equivalencia confirmada"
       }`,
-    );
-    lines.push(`   Plataforma: ${platformLabels[deal.platform]}`);
-    lines.push(`   Descuento Xbox: ${deal.discountPercent ?? 0}%`);
-    lines.push(`   Motivo: ${reasons.length > 0 ? reasons.join(" + ") : "precio bajo"}`);
-    lines.push(`   Link: ${deal.storeUrl}`);
-    lines.push("");
+      `   Plataforma: ${platformLabels[deal.platform]}`,
+      `   Descuento Xbox: ${deal.discountPercent ?? 0}%`,
+      `   Motivo: ${reasons.length > 0 ? reasons.join(" + ") : "precio bajo"}`,
+      `   Link: ${deal.storeUrl}`,
+      "",
+    ];
+    const nextMessage = [...currentLines, ...itemLines].join("\n").trim();
+
+    if (nextMessage.length > DISCORD_CONTENT_LIMIT && currentLines.length > intro.length) {
+      messages.push(currentLines.join("\n").trim());
+      currentLines = [
+        `Mas barato que un alfajor (continuacion ${messages.length + 1})`,
+        "",
+        ...itemLines,
+      ];
+      return;
+    }
+
+    currentLines = [...currentLines, ...itemLines];
   });
 
-  return lines.join("\n").trim();
+  if (currentLines.length > 0) {
+    messages.push(currentLines.join("\n").trim());
+  }
+
+  return messages;
 }

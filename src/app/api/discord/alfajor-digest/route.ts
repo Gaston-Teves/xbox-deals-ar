@@ -102,13 +102,17 @@ export async function POST(request: Request) {
 }
 
 function parseLimit(value: string | null): number | undefined {
+  if (!value) {
+    return undefined;
+  }
+
   const parsed = Number(value);
 
   if (!Number.isFinite(parsed)) {
     return undefined;
   }
 
-  return Math.min(Math.max(Math.floor(parsed), 1), 20);
+  return Math.min(Math.max(Math.floor(parsed), 1), 50);
 }
 
 function parsePositiveNumber(value: string | null): number | undefined {
