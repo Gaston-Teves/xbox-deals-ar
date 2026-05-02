@@ -11,6 +11,7 @@ const DEFAULT_ALFAJOR_PRICE_ARS = 1800;
 const DEFAULT_MAX_DEALS = 10;
 const DEFAULT_REPEAT_DAYS = 7;
 const DISCORD_EMBEDS_PER_MESSAGE = 10;
+const DISCORD_CHUNK_DELAY_MS = 1200;
 const XBOX_GREEN = 0x00ff9d;
 
 const franchiseBoosts: Array<{ pattern: RegExp; boost: number; reason: string }> = [
@@ -121,7 +122,11 @@ export async function sendAlfajorDigestToDiscord(
   const digest = await buildAlfajorDigest(deals, options);
   const payloads = buildAlfajorDiscordPayloads(digest);
 
-  for (const payload of payloads) {
+  for (const [index, payload] of payloads.entries()) {
+    if (index > 0) {
+      await delay(DISCORD_CHUNK_DELAY_MS);
+    }
+
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -441,4 +446,8 @@ function chunkArray<T>(items: T[], size: number): T[][] {
   }
 
   return chunks;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
