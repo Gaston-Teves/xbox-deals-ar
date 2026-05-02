@@ -10,7 +10,8 @@ export const ALFAJOR_ALERT_TYPE = "alfajor-digest";
 const DEFAULT_ALFAJOR_PRICE_ARS = 1800;
 const DEFAULT_MAX_DEALS = 10;
 const DEFAULT_REPEAT_DAYS = 7;
-const DISCORD_CONTENT_LIMIT = 1900;
+const DISCORD_EMBEDS_PER_MESSAGE = 10;
+const XBOX_GREEN = 0x00ff9d;
 
 const franchiseBoosts: Array<{ pattern: RegExp; boost: number; reason: string }> = [
   { pattern: /\b(age of empires|aoe)\b/i, boost: 80, reason: "franquicia historica" },
@@ -118,13 +119,13 @@ export async function sendAlfajorDigestToDiscord(
   } = {},
 ): Promise<AlfajorDigestResult> {
   const digest = await buildAlfajorDigest(deals, options);
-  const messages = buildAlfajorDiscordMessages(digest);
+  const payloads = buildAlfajorDiscordPayloads(digest);
 
-  for (const content of messages) {
+  for (const payload of payloads) {
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -311,62 +312,133 @@ function normalizeDigestTitle(value: string): string {
     .trim();
 }
 
-function buildAlfajorDiscordMessages(digest: AlfajorDigestResult): string[] {
+type DiscordWebhookPayload = {
+  content?: string;
+  embeds?: DiscordEmbed[];
+  allowed_mentions?: {
+    parse: [];
+  };
+};
+
+type DiscordEmbed = {
+  title: string;
+  url?: string;
+  description?: string;
+  color?: number;
+  thumbnail?: {
+    url: string;
+  };
+  fields?: Array<{
+    name: string;
+    value: string;
+    inline?: boolean;
+  }>;
+  footer?: {
+    text: string;
+  };
+};
+
+function buildAlfajorDiscordPayloads(
+  digest: AlfajorDigestResult,
+): DiscordWebhookPayload[] {
   if (digest.selected.length === 0) {
-    return [[
-      "Mas barato que un alfajor",
-      "",
-      `No encontre juegos de PC relevantes por debajo de ${formatArs(
-        digest.threshold,
-      )} en esta corrida.`,
-    ].join("\n")];
-  }
-
-  const intro = [
-    "Mas barato que un alfajor",
-    "",
-    `Juegos de PC en Xbox/Microsoft Store Argentina por menos de ${formatArs(
-      digest.threshold,
-    )}. No todos son ofertas: algunos simplemente estan muy baratos.`,
-    "",
-  ];
-  const messages: string[] = [];
-  let currentLines = [...intro];
-
-  digest.selected.forEach(({ deal, reasons }, index) => {
-    const steamPrice = deal.externalPrices?.[0];
-    const itemLines = [
-      `${index + 1}. ${deal.title}`,
-      `   Xbox: ${formatArs(deal.currentPrice)}`,
-      `   Steam: ${
-        steamPrice
-          ? `${formatMoney(steamPrice.currentPrice, steamPrice.currency)}`
-          : "sin equivalencia confirmada"
-      }`,
-      `   Plataforma: ${platformLabels[deal.platform]}`,
-      `   Descuento Xbox: ${deal.discountPercent ?? 0}%`,
-      `   Motivo: ${reasons.length > 0 ? reasons.join(" + ") : "precio bajo"}`,
-      `   Link: ${deal.storeUrl}`,
-      "",
+    return [
+      {
+        content: [
+          "Mas barato que un alfajor",
+          "",
+          `No encontre juegos de PC relevantes por debajo de ${formatArs(
+            digest.threshold,
+          )} en esta corrida.`,
+        ].join("\n"),
+        allowed_mentions: { parse: [] },
+      },
     ];
-    const nextMessage = [...currentLines, ...itemLines].join("\n").trim();
-
-    if (nextMessage.length > DISCORD_CONTENT_LIMIT && currentLines.length > intro.length) {
-      messages.push(currentLines.join("\n").trim());
-      currentLines = [
-        `Mas barato que un alfajor (continuacion ${messages.length + 1})`,
-        "",
-        ...itemLines,
-      ];
-      return;
-    }
-
-    currentLines = [...currentLines, ...itemLines];
-  });
-
-  if (currentLines.length > 0) {
-    messages.push(currentLines.join("\n").trim());
   }
 
-  return messages;
+  return chunkArray(digest.selected, DISCORD_EMBEDS_PER_MESSAGE).map(
+    (chunk, chunkIndex) => ({
+      content:
+        chunkIndex === 0
+          ? [
+              "Mas barato que un alfajor",
+              `Juegos de PC en Xbox/Microsoft Store Argentina por menos de ${formatArs(
+                digest.threshold,
+              )}.`,
+              "No todos son ofertas: algunos simplemente estan muy baratos.",
+            ].join("\n")
+          : `Mas barato que un alfajor - continuacion ${chunkIndex + 1}`,
+      embeds: chunk.map(({ deal, reasons }, index) =>
+        buildAlfajorDiscordEmbed(
+          deal,
+          reasons,
+          chunkIndex * DISCORD_EMBEDS_PER_MESSAGE + index + 1,
+        ),
+      ),
+      allowed_mentions: { parse: [] },
+    }),
+  );
+}
+
+function buildAlfajorDiscordEmbed(
+  deal: Deal,
+  reasons: string[],
+  index: number,
+): DiscordEmbed {
+  const steamPrice = deal.externalPrices?.[0];
+
+  return {
+    title: `${index}. ${deal.title}`,
+    url: deal.storeUrl,
+    description: reasons.length > 0 ? reasons.join(" + ") : "precio bajo",
+    color: XBOX_GREEN,
+    thumbnail: deal.imageUrl ? { url: deal.imageUrl } : undefined,
+    fields: [
+      {
+        name: "Xbox",
+        value: formatArs(deal.currentPrice),
+        inline: true,
+      },
+      {
+        name: "Steam",
+        value: steamPrice
+          ? formatMoney(steamPrice.currentPrice, steamPrice.currency)
+          : "sin match",
+        inline: true,
+      },
+      {
+        name: "Descuento",
+        value: `${deal.discountPercent ?? 0}%`,
+        inline: true,
+      },
+      {
+        name: "Plataforma",
+        value: platformLabels[deal.platform],
+        inline: true,
+      },
+      {
+        name: "Antes",
+        value: deal.originalPrice ? formatArs(deal.originalPrice) : "sin dato",
+        inline: true,
+      },
+      {
+        name: "Estado",
+        value: deal.isHistoricalLow ? "minimo historico" : "precio bajo",
+        inline: true,
+      },
+    ],
+    footer: {
+      text: "Click en el titulo para abrir Microsoft Store",
+    },
+  };
+}
+
+function chunkArray<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+
+  return chunks;
 }
