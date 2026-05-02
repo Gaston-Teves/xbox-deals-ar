@@ -35,6 +35,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [notifyMessage, setNotifyMessage] = useState<string | null>(null);
   const [isNotifying, setIsNotifying] = useState(false);
+  const [isSendingAlfajorDigest, setIsSendingAlfajorDigest] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isRefreshingSteam, setIsRefreshingSteam] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
@@ -183,6 +184,39 @@ export default function Home() {
     }
   }
 
+  async function sendAlfajorDigest() {
+    setIsSendingAlfajorDigest(true);
+    setNotifyMessage(null);
+
+    try {
+      const response = await fetch("/api/discord/alfajor-digest", {
+        method: "POST",
+      });
+      const result = (await response.json()) as {
+        message?: string;
+        selected?: number;
+        threshold?: number;
+      };
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "No se pudo enviar el informe.");
+      }
+
+      setNotifyMessage(
+        result.message ??
+          `Informe enviado a Discord con ${result.selected ?? 0} juegos.`,
+      );
+    } catch (digestError) {
+      setNotifyMessage(
+        digestError instanceof Error
+          ? digestError.message
+          : "No se pudo enviar el informe mas barato que un alfajor.",
+      );
+    } finally {
+      setIsSendingAlfajorDigest(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
@@ -229,6 +263,16 @@ export default function Home() {
                     className="min-h-10 rounded-md border border-sky-400/40 px-3 text-sm font-bold text-sky-200 transition hover:border-sky-300 hover:bg-sky-400/10 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isRefreshingSteam ? "Buscando Steam..." : "Actualizar Steam"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={sendAlfajorDigest}
+                    disabled={isSendingAlfajorDigest || isLoading}
+                    className="min-h-10 rounded-md border border-amber-300/50 px-3 text-sm font-bold text-amber-100 transition hover:border-amber-200 hover:bg-amber-300/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSendingAlfajorDigest
+                      ? "Enviando informe..."
+                      : "Enviar informe alfajor"}
                   </button>
                 </div>
               </details>
