@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/refresh",
+      "schedule": "0 9,21 * * *"
+    },
+    {
+      "path": "/api/cron/alfajor-digest",
+      "schedule": "0 13 * * *"
+    }
+  ]
+}

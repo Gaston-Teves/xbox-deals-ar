@@ -1,0 +1,517 @@
+{
+  "info": {
+    "_postman_id": "f037dff1-48dd-48fc-9e6d-xbox-deals-ar",
+    "name": "Xbox Deals AR",
+    "description": "Coleccion para probar endpoints propios de Xbox Deals AR y las APIs externas usadas como fuente: Microsoft/Xbox, Steam, Supabase y Discord. Importar junto con el environment `Xbox Deals AR - Local`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "App - Public API",
+      "item": [
+        {
+          "name": "GET /api/deals - listado base",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/deals",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "deals"]
+            },
+            "description": "Lista deals desde Supabase/cache. Es el endpoint principal que consume la UI."
+          }
+        },
+        {
+          "name": "GET /api/deals - mas barato que alfajor preview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/deals?maxPrice=1800&platform=pc&contentType=base-games&hideFree=true&sort=price-asc&page=1&pageSize=60",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "deals"],
+              "query": [
+                { "key": "maxPrice", "value": "1800" },
+                { "key": "platform", "value": "pc" },
+                { "key": "contentType", "value": "base-games" },
+                { "key": "hideFree", "value": "true" },
+                { "key": "sort", "value": "price-asc" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "60" }
+              ]
+            },
+            "description": "Consulta de referencia para ver juegos PC/Play Anywhere por debajo del umbral editorial."
+          }
+        },
+        {
+          "name": "GET /api/deals - busqueda DayZ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/deals?search=DayZ&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "deals"],
+              "query": [
+                { "key": "search", "value": "DayZ" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            },
+            "description": "Caso puntual usado para validar ediciones que incluyen un juego base compatible con PC."
+          }
+        },
+        {
+          "name": "GET /api/catalog/status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "catalog", "status"]
+            },
+            "description": "Estado de cobertura del catalogo persistido, historial y distribucion por plataforma/tipo."
+          }
+        }
+      ]
+    },
+    {
+      "name": "App - Refresh Jobs Manuales",
+      "item": [
+        {
+          "name": "POST /api/refresh - Microsoft/Xbox",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "refresh"]
+            },
+            "description": "Fuerza refresh de catalogo/precios Microsoft Store Argentina y persiste en Supabase si esta configurado."
+          }
+        },
+        {
+          "name": "POST /api/refresh-steam - coverage",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/refresh-steam?contentType=base-games&hideFree=true&limit=250&mode=coverage",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "refresh-steam"],
+              "query": [
+                { "key": "contentType", "value": "base-games" },
+                { "key": "hideFree", "value": "true" },
+                { "key": "limit", "value": "250" },
+                { "key": "mode", "value": "coverage" }
+              ]
+            },
+            "description": "Completa cobertura Steam priorizando juegos base que nunca fueron revisados."
+          }
+        },
+        {
+          "name": "POST /api/refresh-steam - precios conocidos",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/refresh-steam?contentType=base-games&hideFree=true&limit=250&mode=prices",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "refresh-steam"],
+              "query": [
+                { "key": "contentType", "value": "base-games" },
+                { "key": "hideFree", "value": "true" },
+                { "key": "limit", "value": "250" },
+                { "key": "mode", "value": "prices" }
+              ]
+            },
+            "description": "Prioriza refresh de precios Steam de matches ya conocidos."
+          }
+        },
+        {
+          "name": "POST /api/refresh-steam - forzar busqueda por nombre",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/refresh-steam?search=Alan%20Wake&limit=5&force=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "refresh-steam"],
+              "query": [
+                { "key": "search", "value": "Alan Wake" },
+                { "key": "limit", "value": "5" },
+                { "key": "force", "value": "true" }
+              ]
+            },
+            "description": "Reprocesa matches Steam ignorando intentos previos. Util para depurar un juego puntual."
+          }
+        }
+      ]
+    },
+    {
+      "name": "App - Discord",
+      "item": [
+        {
+          "name": "POST /api/notify-discord - resumen general",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notify-discord?maxPrice=1000&hideFree=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notify-discord"],
+              "query": [
+                { "key": "maxPrice", "value": "1000" },
+                { "key": "hideFree", "value": "true" }
+              ]
+            },
+            "description": "Envia resumen generico al webhook configurado en DISCORD_WEBHOOK_URL."
+          }
+        },
+        {
+          "name": "POST /api/discord/alfajor-digest - dry run",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/discord/alfajor-digest?maxPrice=1800&limit=10&includeRecent=true&dryRun=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "discord", "alfajor-digest"],
+              "query": [
+                { "key": "maxPrice", "value": "1800" },
+                { "key": "limit", "value": "10" },
+                { "key": "includeRecent", "value": "true" },
+                { "key": "dryRun", "value": "true" }
+              ]
+            },
+            "description": "Previsualiza el digest 'Mas barato que un alfajor' sin enviar a Discord."
+          }
+        },
+        {
+          "name": "POST /api/discord/alfajor-digest - enviar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/discord/alfajor-digest?maxPrice=1800&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "discord", "alfajor-digest"],
+              "query": [
+                { "key": "maxPrice", "value": "1800" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Envia el digest al canal configurado en ALFAJOR_DISCORD_WEBHOOK_URL o DISCORD_WEBHOOK_URL."
+          }
+        }
+      ]
+    },
+    {
+      "name": "App - Vercel Cron",
+      "item": [
+        {
+          "name": "GET /api/cron/refresh",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cronSecret}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cron/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cron", "refresh"]
+            },
+            "description": "Simula el cron de Vercel que refresca Microsoft/Xbox y procesa una tanda Steam."
+          }
+        },
+        {
+          "name": "GET /api/cron/alfajor-digest",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cronSecret}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cron/alfajor-digest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cron", "alfajor-digest"]
+            },
+            "description": "Simula el cron diario que envia el digest 'Mas barato que un alfajor'."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Supabase REST",
+      "item": [
+        {
+          "name": "GET deals_current - primeros 20",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{supabaseServiceRoleKey}}", "type": "text" },
+              { "key": "Authorization", "value": "Bearer {{supabaseServiceRoleKey}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{supabaseRestUrl}}/deals_current?select=product_id,title,current_price,original_price,discount_percent,platform,content_type,last_seen_at&order=current_price.asc&limit=20",
+              "host": ["{{supabaseRestUrl}}"],
+              "path": ["deals_current"],
+              "query": [
+                { "key": "select", "value": "product_id,title,current_price,original_price,discount_percent,platform,content_type,last_seen_at" },
+                { "key": "order", "value": "current_price.asc" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Lectura directa de precios actuales. Usar con cuidado: requiere service role key."
+          }
+        },
+        {
+          "name": "GET external_store_matches - Steam",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{supabaseServiceRoleKey}}", "type": "text" },
+              { "key": "Authorization", "value": "Bearer {{supabaseServiceRoleKey}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{supabaseRestUrl}}/external_store_matches?select=product_id,external_id,matched_title,match_confidence,updated_at&store=eq.steam&limit=20",
+              "host": ["{{supabaseRestUrl}}"],
+              "path": ["external_store_matches"],
+              "query": [
+                { "key": "select", "value": "product_id,external_id,matched_title,match_confidence,updated_at" },
+                { "key": "store", "value": "eq.steam" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Muestra matches Steam, incluyendo misses con external_id null."
+          }
+        },
+        {
+          "name": "GET alert_events - alfajor digest",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "apikey", "value": "{{supabaseServiceRoleKey}}", "type": "text" },
+              { "key": "Authorization", "value": "Bearer {{supabaseServiceRoleKey}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{supabaseRestUrl}}/alert_events?select=id,product_id,alert_type,sent_to,sent_at&alert_type=eq.alfajor-digest&order=sent_at.desc&limit=20",
+              "host": ["{{supabaseRestUrl}}"],
+              "path": ["alert_events"],
+              "query": [
+                { "key": "select", "value": "id,product_id,alert_type,sent_to,sent_at" },
+                { "key": "alert_type", "value": "eq.alfajor-digest" },
+                { "key": "order", "value": "sent_at.desc" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Verifica que el digest registre envios y pueda evitar repeticiones."
+          }
+        }
+      ]
+    },
+    {
+      "name": "External APIs - Microsoft/Xbox",
+      "item": [
+        {
+          "name": "GET Xbox browse - games by price",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "es-AR,es;q=0.9,en;q=0.7",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://www.xbox.com/es-AR/games/browse?orderby=Price%20asc",
+              "protocol": "https",
+              "host": ["www", "xbox", "com"],
+              "path": ["es-AR", "games", "browse"],
+              "query": [
+                { "key": "orderby", "value": "Price asc" }
+              ]
+            },
+            "description": "Pagina HTML usada para descubrir productos Xbox. El scraper extrae productId desde datos embebidos."
+          }
+        },
+        {
+          "name": "GET Xbox browse - Game Pass PC",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "es-AR,es;q=0.9,en;q=0.7",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://www.xbox.com/es-AR/games/browse?IncludedInSubscription=PCGamePass",
+              "protocol": "https",
+              "host": ["www", "xbox", "com"],
+              "path": ["es-AR", "games", "browse"],
+              "query": [
+                { "key": "IncludedInSubscription", "value": "PCGamePass" }
+              ]
+            },
+            "description": "Fuente para detectar juegos incluidos en PC Game Pass."
+          }
+        },
+        {
+          "name": "GET Microsoft Store collection - PC top paid",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "es-AR,es;q=0.9,en;q=0.7",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://www.microsoft.com/es-ar/store/top-paid/games/pc?skipItems=0",
+              "protocol": "https",
+              "host": ["www", "microsoft", "com"],
+              "path": ["es-ar", "store", "top-paid", "games", "pc"],
+              "query": [
+                { "key": "skipItems", "value": "0" }
+              ]
+            },
+            "description": "Coleccion Microsoft Store paginable. El scraper usa skipItems en bloques de 50."
+          }
+        },
+        {
+          "name": "GET Display Catalog - product details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "es-AR,es;q=0.9,en;q=0.7",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://displaycatalog.mp.microsoft.com/v7.0/products?bigIds={{xboxProductIds}}&market=AR&languages=es-ar&MS-CV=DGU1mcuYo0WMMp%2B",
+              "protocol": "https",
+              "host": ["displaycatalog", "mp", "microsoft", "com"],
+              "path": ["v7.0", "products"],
+              "query": [
+                { "key": "bigIds", "value": "{{xboxProductIds}}" },
+                { "key": "market", "value": "AR" },
+                { "key": "languages", "value": "es-ar" },
+                { "key": "MS-CV", "value": "DGU1mcuYo0WMMp+" }
+              ]
+            },
+            "description": "Catalogo publico de Microsoft usado para enriquecer productos con precio, imagen, categorias, plataformas y metadata."
+          }
+        }
+      ]
+    },
+    {
+      "name": "External APIs - Steam",
+      "item": [
+        {
+          "name": "GET Steam storesearch",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "es-AR,es;q=0.9,en;q=0.7",
+                "type": "text"
+              },
+              {
+                "key": "User-Agent",
+                "value": "xbox-deals-ar/0.1 (+personal price tracker)",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://store.steampowered.com/api/storesearch/?term={{steamTerm}}&cc=ar&l=spanish",
+              "protocol": "https",
+              "host": ["store", "steampowered", "com"],
+              "path": ["api", "storesearch", ""],
+              "query": [
+                { "key": "term", "value": "{{steamTerm}}" },
+                { "key": "cc", "value": "ar" },
+                { "key": "l", "value": "spanish" }
+              ]
+            },
+            "description": "Busqueda publica de Steam usada para encontrar equivalencias por titulo."
+          }
+        },
+        {
+          "name": "GET Steam appdetails",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "es-AR,es;q=0.9,en;q=0.7",
+                "type": "text"
+              },
+              {
+                "key": "User-Agent",
+                "value": "xbox-deals-ar/0.1 (+personal price tracker)",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://store.steampowered.com/api/appdetails?appids={{steamAppId}}&cc=ar&l=spanish&filters=basic,price_overview",
+              "protocol": "https",
+              "host": ["store", "steampowered", "com"],
+              "path": ["api", "appdetails"],
+              "query": [
+                { "key": "appids", "value": "{{steamAppId}}" },
+                { "key": "cc", "value": "ar" },
+                { "key": "l", "value": "spanish" },
+                { "key": "filters", "value": "basic,price_overview" }
+              ]
+            },
+            "description": "Detalle/precio de Steam para un appid conocido. Se usa para refrescar matches sin volver a buscar por nombre."
+          }
+        }
+      ]
+    },
+    {
+      "name": "External APIs - Discord",
+      "item": [
+        {
+          "name": "POST Discord webhook directo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Prueba desde Postman - Xbox Deals AR\"\n}"
+            },
+            "url": {
+              "raw": "{{discordWebhookUrl}}",
+              "host": ["{{discordWebhookUrl}}"]
+            },
+            "description": "Prueba directa del webhook. No usar con URLs reales si vas a compartir la coleccion."
+          }
+        }
+      ]
+    }
+  ]
+}
