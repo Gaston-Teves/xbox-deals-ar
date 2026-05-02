@@ -375,7 +375,7 @@ function buildAlfajorDiscordPayloads(
               `30 juegos de PC por menos de ${formatArs(digest.threshold)} en Microsoft Store Argentina.`,
               "Precios ridiculos, algunos con descuento y otros simplemente los seteo alguien que quiere fundir la empresa, sino no se entiende jajaja.",
               "Balato Balato todo",
-              appUrl ? `Buscador completo: <${appUrl}>` : "",
+              appUrl ? `Buscador completo por si queres ver mas: <${appUrl}>` : "",
             ]
               .filter(Boolean)
               .join("\n")
