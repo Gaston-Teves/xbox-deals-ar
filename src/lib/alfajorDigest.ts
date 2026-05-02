@@ -346,6 +346,8 @@ type DiscordEmbed = {
 function buildAlfajorDiscordPayloads(
   digest: AlfajorDigestResult,
 ): DiscordWebhookPayload[] {
+  const appUrl = getPublicAppUrl();
+
   if (digest.selected.length === 0) {
     return [
       {
@@ -355,7 +357,10 @@ function buildAlfajorDiscordPayloads(
           `No encontre juegos de PC relevantes por debajo de ${formatArs(
             digest.threshold,
           )} en esta corrida.`,
-        ].join("\n"),
+          appUrl ? `Buscador: <${appUrl}>` : "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
         allowed_mentions: { parse: [] },
       },
     ];
@@ -366,12 +371,14 @@ function buildAlfajorDiscordPayloads(
       content:
         chunkIndex === 0
           ? [
-              "Mas barato que un alfajor",
-              `Juegos de PC en Xbox/Microsoft Store Argentina por menos de ${formatArs(
-                digest.threshold,
-              )}.`,
-              "No todos son ofertas: algunos simplemente estan muy baratos.",
-            ].join("\n")
+              "🧉 Mas baratito que un alfajor che",
+              `30 juegos de PC por menos de ${formatArs(digest.threshold)} en Microsoft Store Argentina.`,
+              "Precios ridiculos, algunos con descuento y otros simplemente los seteo alguien que quiere fundir la empresa, sino no se entiende jajaja.",
+              "Balato Balato todo",
+              appUrl ? `Buscador completo: <${appUrl}>` : "",
+            ]
+              .filter(Boolean)
+              .join("\n")
           : `Mas barato que un alfajor - continuacion ${chunkIndex + 1}`,
       embeds: chunk.map(({ deal, reasons }, index) =>
         buildAlfajorDiscordEmbed(
@@ -450,4 +457,28 @@ function chunkArray<T>(items: T[], size: number): T[][] {
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getPublicAppUrl(): string | undefined {
+  const configuredUrl =
+    process.env.APP_PUBLIC_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  if (configuredUrl) {
+    return withProtocol(configuredUrl);
+  }
+
+  const vercelUrl =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
+    process.env.VERCEL_URL?.trim();
+
+  return vercelUrl ? withProtocol(vercelUrl) : undefined;
+}
+
+function withProtocol(url: string): string {
+  if (/^https?:\/\//i.test(url)) {
+    return url.replace(/\/$/, "");
+  }
+
+  return `https://${url.replace(/\/$/, "")}`;
 }

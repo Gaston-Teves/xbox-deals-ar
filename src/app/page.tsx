@@ -26,6 +26,7 @@ type ApiResponse = {
 };
 
 export default function Home() {
+  const showManualActions = process.env.NODE_ENV !== "production";
   const [filters, setFilters] = useState<DealFilters>(defaultFilters);
   const [sort, setSort] = useState<SortOption>("price-asc");
   const [page, setPage] = useState(1);
@@ -234,49 +235,51 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
-              <button
-                type="button"
-                onClick={notifyDiscord}
-                disabled={isNotifying || isLoading}
-                className="min-h-11 rounded-md bg-emerald-400 px-4 text-sm font-bold text-zinc-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isNotifying ? "Enviando..." : "Enviar resumen a Discord"}
-              </button>
-              <details className="group relative">
-                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-md border border-zinc-700 px-4 text-sm font-bold text-zinc-200 transition hover:border-emerald-400 hover:text-emerald-200 marker:hidden">
-                  Herramientas
-                </summary>
-                <div className="mt-2 grid gap-2 rounded-md border border-zinc-800 bg-zinc-950 p-2 shadow-xl sm:absolute sm:right-0 sm:z-10 sm:w-56">
-                  <button
-                    type="button"
-                    onClick={refreshDeals}
-                    disabled={isRefreshing || isLoading}
-                    className="min-h-10 rounded-md border border-emerald-400/40 px-3 text-sm font-bold text-emerald-200 transition hover:border-emerald-300 hover:bg-emerald-400/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isRefreshing ? "Actualizando..." : "Actualizar ofertas"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={refreshSteamPrices}
-                    disabled={isRefreshingSteam || isLoading}
-                    className="min-h-10 rounded-md border border-sky-400/40 px-3 text-sm font-bold text-sky-200 transition hover:border-sky-300 hover:bg-sky-400/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isRefreshingSteam ? "Buscando Steam..." : "Actualizar Steam"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={sendAlfajorDigest}
-                    disabled={isSendingAlfajorDigest || isLoading}
-                    className="min-h-10 rounded-md border border-amber-300/50 px-3 text-sm font-bold text-amber-100 transition hover:border-amber-200 hover:bg-amber-300/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isSendingAlfajorDigest
-                      ? "Enviando informe..."
-                      : "Enviar informe alfajor"}
-                  </button>
-                </div>
-              </details>
-            </div>
+            {showManualActions ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+                <button
+                  type="button"
+                  onClick={notifyDiscord}
+                  disabled={isNotifying || isLoading}
+                  className="min-h-11 rounded-md bg-emerald-400 px-4 text-sm font-bold text-zinc-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isNotifying ? "Enviando..." : "Enviar resumen a Discord"}
+                </button>
+                <details className="group relative">
+                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-md border border-zinc-700 px-4 text-sm font-bold text-zinc-200 transition hover:border-emerald-400 hover:text-emerald-200 marker:hidden">
+                    Herramientas
+                  </summary>
+                  <div className="mt-2 grid gap-2 rounded-md border border-zinc-800 bg-zinc-950 p-2 shadow-xl sm:absolute sm:right-0 sm:z-10 sm:w-56">
+                    <button
+                      type="button"
+                      onClick={refreshDeals}
+                      disabled={isRefreshing || isLoading}
+                      className="min-h-10 rounded-md border border-emerald-400/40 px-3 text-sm font-bold text-emerald-200 transition hover:border-emerald-300 hover:bg-emerald-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isRefreshing ? "Actualizando..." : "Actualizar ofertas"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={refreshSteamPrices}
+                      disabled={isRefreshingSteam || isLoading}
+                      className="min-h-10 rounded-md border border-sky-400/40 px-3 text-sm font-bold text-sky-200 transition hover:border-sky-300 hover:bg-sky-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isRefreshingSteam ? "Buscando Steam..." : "Actualizar Steam"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={sendAlfajorDigest}
+                      disabled={isSendingAlfajorDigest || isLoading}
+                      className="min-h-10 rounded-md border border-amber-300/50 px-3 text-sm font-bold text-amber-100 transition hover:border-amber-200 hover:bg-amber-300/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSendingAlfajorDigest
+                        ? "Enviando informe..."
+                        : "Enviar informe alfajor"}
+                    </button>
+                  </div>
+                </details>
+              </div>
+            ) : null}
           </div>
         </header>
 

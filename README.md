@@ -41,6 +41,8 @@ STEAM_CRON_LIMIT=250
 ALFAJOR_PRICE_ARS=1800
 ALFAJOR_DIGEST_MAX_DEALS=10
 ALFAJOR_REPEAT_DAYS=7
+APP_PUBLIC_URL=
+NEXT_PUBLIC_APP_URL=
 ```
 
 ## Configurar Discord Webhook
@@ -56,6 +58,8 @@ ALFAJOR_REPEAT_DAYS=7
 El webhook no se expone al frontend. La UI llama a `/api/notify-discord` y el servidor lee la variable de entorno.
 
 Para probar el canal tematico "Mas barato que un alfajor", se puede usar un webhook separado en `ALFAJOR_DISCORD_WEBHOOK_URL`. Si no existe, el endpoint usa `DISCORD_WEBHOOK_URL`.
+
+Si queres que el mensaje diario incluya el link a la app deployada, configurar `APP_PUBLIC_URL` con la URL publica de Vercel. El digest la agrega como link sin preview automatica.
 
 ## Probar API
 
@@ -130,6 +134,8 @@ Ese endpoint muestra total en `catalog_products`, productos con precio actual en
 3. Usar los defaults de Next.js.
 4. Configurar `DISCORD_WEBHOOK_URL` en Project Settings > Environment Variables.
 5. Deploy.
+
+Para que otra persona configure su propio servidor de Discord sin tocar codigo, seguir [docs/discord-setup.md](docs/discord-setup.md).
 
 ## Supabase
 
