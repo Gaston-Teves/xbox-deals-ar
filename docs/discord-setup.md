@@ -50,8 +50,9 @@ APP_PUBLIC_URL=https://xbox-deals-ar.vercel.app
 
 Vercel lee `vercel.json` y ejecuta:
 
-- `/api/cron/refresh`: actualiza catalogo Xbox y cobertura Steam.
-- `/api/cron/alfajor-digest`: envia el informe diario a Discord.
+- `/api/cron/daily`: actualiza catalogo Xbox, cobertura Steam y envia el informe diario a Discord.
+
+En Vercel Hobby, los cron solo pueden correr una vez por dia. Si usas Vercel Pro, podes separar refresh y digest en varios horarios.
 
 ## 5. Ajustes utiles
 

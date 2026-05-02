@@ -166,31 +166,29 @@ El proyecto incluye `vercel.json` con crons de Vercel:
 ```json
 [
   {
-    "path": "/api/cron/refresh",
-    "schedule": "0 9,21 * * *"
-  },
-  {
-    "path": "/api/cron/alfajor-digest",
+    "path": "/api/cron/daily",
     "schedule": "0 13 * * *"
   }
 ]
 ```
 
-El refresh general corre dos veces por dia: 06:00 y 18:00 de Argentina. El endpoint:
+En Vercel Hobby, los cron solo pueden correr una vez por dia. Por eso el cron productivo usa `/api/cron/daily`, una rutina diaria que corre alrededor de las 10:00 de Argentina. El endpoint:
 
 - refresca el catalogo/precios de Microsoft Store Argentina;
 - guarda historico en Supabase;
 - procesa una tanda de Steam usando `STEAM_CRON_LIMIT`;
 - primero completa cobertura de juegos base pendientes y despues refresca precios stale de matches conocidos;
 - guarda matches validos y tambien intentos sin match para reintentarlos mas adelante, no en cada corrida.
+- envia el digest "Mas barato que un alfajor" al canal configurado.
 
-El digest "Mas barato que un alfajor" corre una vez por dia, 10:00 de Argentina, y envia al canal configurado una seleccion editorial de juegos baratos y relevantes.
+Si usas Vercel Pro, podes volver a programar `/api/cron/refresh` dos veces por dia y dejar `/api/cron/alfajor-digest` separado.
 
 Para activarlo en Vercel, configurar `CRON_SECRET` en Environment Variables. Vercel enviara `Authorization: Bearer <CRON_SECRET>` al endpoint programado. En local se puede probar con:
 
 ```bash
 curl -H "Authorization: Bearer TU_CRON_SECRET" "http://localhost:3000/api/cron/refresh"
 curl -H "Authorization: Bearer TU_CRON_SECRET" "http://localhost:3000/api/cron/alfajor-digest"
+curl -H "Authorization: Bearer TU_CRON_SECRET" "http://localhost:3000/api/cron/daily"
 ```
 
 ## Fuente de datos
