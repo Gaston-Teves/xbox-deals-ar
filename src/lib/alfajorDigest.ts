@@ -8,7 +8,7 @@ import type { Deal } from "./types";
 
 export const ALFAJOR_ALERT_TYPE = "alfajor-digest";
 const DEFAULT_ALFAJOR_PRICE_ARS = 1800;
-const DEFAULT_MAX_DEALS = 10;
+const DEFAULT_MAX_DEALS = 15;
 const DEFAULT_REPEAT_DAYS = 7;
 const DISCORD_EMBEDS_PER_MESSAGE = 10;
 const DISCORD_CHUNK_DELAY_MS = 1200;
@@ -372,7 +372,7 @@ function buildAlfajorDiscordPayloads(
         chunkIndex === 0
           ? [
               "🧉 Mas baratito que un alfajor che",
-              `30 juegos de PC por menos de ${formatArs(digest.threshold)} en Microsoft Store Argentina.`,
+              `${digest.selected.length} juegos de PC por menos de ${formatArs(digest.threshold)} en Microsoft Store Argentina.`,
               "Precios ridiculos, algunos con descuento y otros simplemente los seteo alguien que quiere fundir la empresa, sino no se entiende jajaja.",
               "Balato Balato todo",
               appUrl ? `Buscador completo por si queres ver mas: <${appUrl}>` : "",
