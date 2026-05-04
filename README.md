@@ -161,29 +161,44 @@ La comparativa Steam no requiere API key. Usa endpoints publicos de Steam Store 
 
 ## Refresh automatico
 
-El proyecto incluye `vercel.json` con crons de Vercel:
+El envio diario a Discord corre en Vercel y el refresh pesado del catalogo corre en GitHub Actions.
+
+`vercel.json` programa solo el digest, porque es un endpoint liviano:
 
 ```json
 [
   {
-    "path": "/api/cron/daily",
+    "path": "/api/cron/alfajor-digest",
     "schedule": "0 13 * * *"
   }
 ]
 ```
 
-En Vercel Hobby, los cron solo pueden correr una vez por dia. Por eso el cron productivo usa `/api/cron/daily`, una rutina diaria que corre alrededor de las 10:00 de Argentina. El endpoint:
+En Vercel Hobby, los cron pueden correr una vez por dia y comparten los limites de duracion de Vercel Functions. Por eso el refresh completo de Microsoft Store + Steam no debe depender de un unico endpoint serverless. El cron de Vercel corre alrededor de las 10:00 de Argentina y solo:
+
+- lee los precios ya persistidos en Supabase;
+- evita repetir juegos enviados recientemente segun `ALFAJOR_REPEAT_DAYS`;
+- envia el digest "Mas barato que un alfajor" al canal configurado.
+
+El catalogo y Steam se actualizan con `.github/workflows/scheduled-refresh.yml` dos veces por dia:
 
 - refresca el catalogo/precios de Microsoft Store Argentina;
 - guarda historico en Supabase;
 - procesa una tanda de Steam usando `STEAM_CRON_LIMIT`;
 - primero completa cobertura de juegos base pendientes y despues refresca precios stale de matches conocidos;
 - guarda matches validos y tambien intentos sin match para reintentarlos mas adelante, no en cada corrida.
-- envia el digest "Mas barato que un alfajor" al canal configurado.
 
-Si usas Vercel Pro, podes volver a programar `/api/cron/refresh` dos veces por dia y dejar `/api/cron/alfajor-digest` separado.
+Para que GitHub Actions funcione, cargar estos secrets en el repositorio:
 
-Para activarlo en Vercel, configurar `CRON_SECRET` en Environment Variables. Vercel enviara `Authorization: Bearer <CRON_SECRET>` al endpoint programado. En local se puede probar con:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Y opcionalmente estas variables en `Settings > Secrets and variables > Actions > Variables`:
+
+- `XBOX_DEALS_MAX_PAGES`
+- `STEAM_CRON_LIMIT`
+
+Para activar el digest en Vercel, configurar `CRON_SECRET` en Environment Variables. Vercel enviara `Authorization: Bearer <CRON_SECRET>` al endpoint programado. En local se puede probar con:
 
 ```bash
 curl -H "Authorization: Bearer TU_CRON_SECRET" "http://localhost:3000/api/cron/refresh"
