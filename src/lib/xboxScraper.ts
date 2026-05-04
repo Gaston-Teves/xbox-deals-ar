@@ -5,6 +5,7 @@ const MICROSOFT_STORE_PAGE_SIZE = 50;
 const DEFAULT_MICROSOFT_STORE_MAX_PAGES = 4;
 const SOURCE_CONCURRENCY = 4;
 const PAGE_CONCURRENCY = 3;
+const CATALOG_CONCURRENCY = 8;
 const MICROSOFT_STORE_PLATFORMS = ["xbox", "pc"] as const;
 const MICROSOFT_STORE_COLLECTIONS = [
   "top-paid",
@@ -416,31 +417,35 @@ async function mapRawDealsToDeals(rawDeals: RawMicrosoftStoreDeal[]): Promise<De
 async function fetchCatalogProducts(productIds: string[]): Promise<CatalogProduct[]> {
   const uniqueIds = [...new Set(productIds.map((id) => id.toUpperCase()))];
   const chunks = chunk(uniqueIds, 40);
-  const products: CatalogProduct[] = [];
+  const settledChunks = await runWithConcurrency(
+    chunks,
+    CATALOG_CONCURRENCY,
+    async (ids) => {
+      const url = new URL(CATALOG_URL);
+      url.searchParams.set("market", "AR");
+      url.searchParams.set("languages", "es-ar");
+      url.searchParams.set("bigIds", ids.join(","));
 
-  for (const ids of chunks) {
-    const url = new URL(CATALOG_URL);
-    url.searchParams.set("market", "AR");
-    url.searchParams.set("languages", "es-ar");
-    url.searchParams.set("bigIds", ids.join(","));
+      const response = await fetch(url, {
+        headers: {
+          "Accept-Language": "es-AR,es;q=0.9,en;q=0.7",
+          "User-Agent": "xbox-deals-ar/0.1 (+personal price tracker)",
+        },
+        cache: "no-store",
+      });
 
-    const response = await fetch(url, {
-      headers: {
-        "Accept-Language": "es-AR,es;q=0.9,en;q=0.7",
-        "User-Agent": "xbox-deals-ar/0.1 (+personal price tracker)",
-      },
-      cache: "no-store",
-    });
+      if (!response.ok) {
+        return [];
+      }
 
-    if (!response.ok) {
-      continue;
-    }
+      const data = (await response.json()) as { Products?: CatalogProduct[] };
+      return data.Products ?? [];
+    },
+  );
 
-    const data = (await response.json()) as { Products?: CatalogProduct[] };
-    products.push(...(data.Products ?? []));
-  }
-
-  return products;
+  return settledChunks.flatMap((result) =>
+    result.status === "fulfilled" ? result.value : [],
+  );
 }
 
 function findBestPrice(
