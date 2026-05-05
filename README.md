@@ -161,7 +161,7 @@ La comparativa Steam no requiere API key. Usa endpoints publicos de Steam Store 
 
 ## Refresh automatico
 
-El envio diario a Discord corre en Vercel y el refresh pesado del catalogo corre en GitHub Actions.
+El envio a Discord corre cada 3 dias en Vercel y el refresh pesado del catalogo corre en GitHub Actions.
 
 `vercel.json` programa solo el digest, porque es un endpoint liviano:
 
@@ -169,12 +169,12 @@ El envio diario a Discord corre en Vercel y el refresh pesado del catalogo corre
 [
   {
     "path": "/api/cron/alfajor-digest",
-    "schedule": "0 13 * * *"
+    "schedule": "0 13 */3 * *"
   }
 ]
 ```
 
-En Vercel Hobby, los cron pueden correr una vez por dia y comparten los limites de duracion de Vercel Functions. Por eso el refresh completo de Microsoft Store + Steam no debe depender de un unico endpoint serverless. El cron de Vercel corre alrededor de las 10:00 de Argentina y solo:
+En Vercel Hobby, los cron comparten los limites de duracion de Vercel Functions. Por eso el refresh completo de Microsoft Store + Steam no debe depender de un unico endpoint serverless. El cron de Vercel corre cada 3 dias alrededor de las 10:00 de Argentina y solo:
 
 - lee los precios ya persistidos en Supabase;
 - evita repetir juegos enviados recientemente segun `ALFAJOR_REPEAT_DAYS`;
